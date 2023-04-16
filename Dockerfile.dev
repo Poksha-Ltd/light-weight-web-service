@@ -1,0 +1,11 @@
+FROM node:19
+
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
+WORKDIR /app
+
+COPY package.json /app
+COPY package-lock.json /app
+
+RUN npm ci
