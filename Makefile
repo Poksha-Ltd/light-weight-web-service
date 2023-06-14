@@ -31,3 +31,5 @@ dev/migrate:
 dev/test:
 	echo "not implemented"
 	exit 1
+
+dev/setup: dev/build dev/up dev/migrate
