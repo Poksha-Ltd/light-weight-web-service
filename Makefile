@@ -4,6 +4,9 @@ dev/build:
 dev/up:
 	docker compose -f docker-compose.dev.yaml up -d
 
+dev/restart:
+	docker compose -f docker-compose.dev.yaml restart
+
 dev/up/build:
 	docker compose -f docker-compose.dev.yaml up -d --build
 
@@ -15,6 +18,9 @@ dev/ps:
 
 dev/logs:
 	docker compose -f docker-compose.dev.yaml logs -f
+
+dev/logs/web:
+	docker compose -f docker-compose.dev.yaml logs -f web
 
 dev/shell:
 	docker compose -f docker-compose.dev.yaml exec web bash

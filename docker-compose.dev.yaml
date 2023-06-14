@@ -12,6 +12,8 @@ services:
     volumes:
       - ./:/app
       - node-modules:/app/node_modules
+    networks:
+      - default
   db:
     image: postgres:13-alpine
     ports:
@@ -21,6 +23,14 @@ services:
     environment:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: app
+    networks:
+      - default
+  mailer:
+    image: mailhog/mailhog
+    networks:
+      - default
+    ports:
+      - 8025:8025
   db-test:
     image: postgres:13-alpine
     ports:
@@ -33,6 +43,13 @@ services:
     environment:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: app
+    networks:
+      - default
+
 volumes:
   postgres-data:
   node-modules:
+
+
+networks:
+  default:
