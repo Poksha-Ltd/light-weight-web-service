@@ -45,6 +45,8 @@ services:
       POSTGRES_DB: app
     networks:
       - default
+    profiles:
+      - test
 
 volumes:
   postgres-data:

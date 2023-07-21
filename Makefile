@@ -25,8 +25,13 @@ dev/logs/web:
 dev/shell:
 	docker compose -f docker-compose.dev.yaml exec web bash
 
-dev/migrate:
-	docker compose -f docker-compose.dev.yaml exec web npx prisma migrate dev --name init
+dev/db/migrate:
+	docker compose -f docker-compose.dev.yaml exec web npx prisma migrate dev
+	docker compose -f docker-compose.dev.yaml exec web npx prisma generate
+
+dev/db/reset:
+	docker compose -f docker-compose.dev.yaml exec web npx prisma migrate reset --force
+	docker compose -f docker-compose.dev.yaml exec web npx prisma generate
 
 dev/test:
 	echo "not implemented"

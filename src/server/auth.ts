@@ -4,11 +4,13 @@ import {
   type NextAuthOptions,
   type DefaultSession,
 } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
+import CredentialsProvider from "next-auth/providers/credentials";
 import EmailProvider from "next-auth/providers/email";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { env } from "~/env.mjs";
 import { prisma } from "~/server/db";
+import bcrypt from "bcrypt"
+import { PrismaClient } from '@prisma/client'
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -23,12 +25,19 @@ declare module "next-auth" {
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
+    accessToken: string
   }
 
   // interface User {
   //   // ...other properties
   //   // role: UserRole;
   // }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    userId?: string
+  }
 }
 
 /**
@@ -38,13 +47,31 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    async session({ session, user, token }) {
+      const u = { ...user }
+
+      if (token?.userId) {
+        u.id = token.userId
+      }
+
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: u.id,
+        },
+      }
+    },
+    async signIn({ user, account, profile, email, credentials }) {
+      return true
+    },
+    async jwt({ token, user, account, profile }) {
+      if (user) {
+        token.userId = user.id
+      }
+      return token
+    },
+
   },
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -59,6 +86,37 @@ export const authOptions: NextAuthOptions = {
       },
       from: process.env.EMAIL_FROM
     }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        username: { label: "id", type: "text", placeholder: "user id" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials, req) {
+        if (!credentials?.username) return null
+        const prisma = new PrismaClient()
+        const user = await prisma.user.findFirst({
+          where: {
+            id: credentials.username,
+          },
+          include: {
+            userPassword: {
+              select: {
+                hashedPassword: true
+              }
+            }
+          }
+        })
+        if (!user || !user.userPassword?.hashedPassword) return null
+        const m = await bcrypt.compare(credentials.password, user.userPassword.hashedPassword)
+        if (m) {
+          console.log("login success", user);
+
+          return user
+        }
+        return null
+      }
+    }),
     /**
      * ...add more providers here.
      *
@@ -69,6 +127,10 @@ export const authOptions: NextAuthOptions = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
+  session: {
+    strategy: "jwt",
+  },
+  secret: env.NEXTAUTH_SECRET,
 };
 
 /**

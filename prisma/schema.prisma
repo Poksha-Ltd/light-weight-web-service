@@ -42,12 +42,20 @@ model Session {
 }
 
 model User {
-    id            String    @id @default(cuid())
+    id            String        @id @default(cuid())
     name          String?
-    email         String?   @unique
+    email         String?       @unique
     emailVerified DateTime?
     accounts      Account[]
     sessions      Session[]
+    userPassword  UserPassword?
+}
+
+model UserPassword {
+    id             String @id @default(cuid())
+    userId         String @unique
+    hashedPassword String
+    user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
