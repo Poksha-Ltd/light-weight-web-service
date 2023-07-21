@@ -49,6 +49,7 @@ model User {
     accounts      Account[]
     sessions      Session[]
     userPassword  UserPassword?
+    userRoles     UserRole[]
 }
 
 model UserPassword {
@@ -56,6 +57,12 @@ model UserPassword {
     userId         String @unique
     hashedPassword String
     user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserRole {
+    id   String @id @default(cuid())
+    name String @unique
+    user User[]
 }
 
 model VerificationToken {

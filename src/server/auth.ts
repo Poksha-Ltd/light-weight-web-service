@@ -11,6 +11,7 @@ import { env } from "~/env.mjs";
 import { prisma } from "~/server/db";
 import bcrypt from "bcrypt"
 import { PrismaClient } from '@prisma/client'
+import { User as ModelUser, UserRole, newUserRole } from "~/features/user/models";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -20,23 +21,15 @@ import { PrismaClient } from '@prisma/client'
  */
 declare module "next-auth" {
   interface Session extends DefaultSession {
-    user: {
-      id: string;
-      // ...other properties
-      // role: UserRole;
-    } & DefaultSession["user"];
-    accessToken: string
+    user: ModelUser & DefaultSession["user"]
   }
-
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+  interface User extends ModelUser { }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     userId?: string
+    roles?: UserRole[]
   }
 }
 
@@ -53,12 +46,15 @@ export const authOptions: NextAuthOptions = {
       if (token?.userId) {
         u.id = token.userId
       }
+      if (token?.roles) {
+        u.roles = token.roles
+      }
 
       return {
         ...session,
         user: {
           ...session.user,
-          id: u.id,
+          ...u,
         },
       }
     },
@@ -68,7 +64,9 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account, profile }) {
       if (user) {
         token.userId = user.id
+        token.roles = user.roles
       }
+
       return token
     },
 
@@ -104,15 +102,26 @@ export const authOptions: NextAuthOptions = {
               select: {
                 hashedPassword: true
               }
+            },
+            userRoles: {
+              select: {
+                name: true
+              }
             }
           }
         })
         if (!user || !user.userPassword?.hashedPassword) return null
         const m = await bcrypt.compare(credentials.password, user.userPassword.hashedPassword)
         if (m) {
-          console.log("login success", user);
+          const u: ModelUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            roles: user.userRoles.map(r => newUserRole(r.name)).filter(r => r !== null).map(r => r as UserRole)
+          }
+          console.log("login success", user.userRoles);
 
-          return user
+          return u
         }
         return null
       }
