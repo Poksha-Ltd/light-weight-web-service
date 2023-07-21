@@ -12,6 +12,7 @@ services:
     volumes:
       - ./:/app
       - node-modules:/app/node_modules
+      - ./node_modules/.prisma:/app/node_modules/.prisma
     networks:
       - default
   db:
