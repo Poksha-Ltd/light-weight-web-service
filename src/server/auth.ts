@@ -58,10 +58,26 @@ export const authOptions: NextAuthOptions = {
         },
       }
     },
-    async signIn({ user, account, profile, email, credentials }) {
-      return true
+    async signIn({ user }) {
+      const prisma = new PrismaClient()
+      if (!user) return false
+      const u1 = await prisma.user.findUnique({
+        where: {
+          id: user.id
+        },
+      })
+      if (u1) return true
+      if (!user.email) return false
+      const u2 = await prisma.user.findUnique({
+        where: {
+          email: user.email
+        },
+      })
+      if (u2) return true
+
+      return false
     },
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user }) {
       if (user) {
         token.userId = user.id
         token.roles = user.roles
@@ -119,7 +135,6 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             roles: user.userRoles.map(r => newUserRole(r.name)).filter(r => r !== null).map(r => r as UserRole)
           }
-          console.log("login success", user.userRoles);
 
           return u
         }
