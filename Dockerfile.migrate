@@ -7,5 +7,9 @@ WORKDIR /app
 
 COPY package.json /app
 COPY package-lock.json /app
+COPY prisma /app/prisma
+
 
 RUN npm ci
+
+CMD npx prisma migrate deploy

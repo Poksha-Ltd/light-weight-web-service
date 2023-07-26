@@ -11,7 +11,7 @@ import { env } from "~/env.mjs";
 import { prisma } from "~/server/db";
 import bcrypt from "bcrypt"
 import { PrismaClient } from '@prisma/client'
-import { User as ModelUser, UserRole, newUserRole } from "~/features/user/models";
+import { type User as ModelUser, type UserRole, newUserRole } from "~/features/user/models";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -40,7 +40,7 @@ declare module "next-auth/jwt" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    async session({ session, user, token }) {
+    session({ session, user, token }) {
       const u = { ...user }
 
       if (token?.userId) {
@@ -77,7 +77,7 @@ export const authOptions: NextAuthOptions = {
 
       return false
     },
-    async jwt({ token, user }) {
+    jwt({ token, user }) {
       if (user) {
         token.userId = user.id
         token.roles = user.roles
@@ -106,7 +106,7 @@ export const authOptions: NextAuthOptions = {
         username: { label: "id", type: "text", placeholder: "user id" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials, req) {
+      async authorize(credentials, _) {
         if (!credentials?.username) return null
         const prisma = new PrismaClient()
         const user = await prisma.user.findFirst({

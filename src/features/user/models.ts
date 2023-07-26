@@ -10,7 +10,7 @@ export type User = {
 
 
 export const newUserRole = (v: string): UserRole | null => {
-  if (USER_ROLES.includes(v as any)) {
+  if (USER_ROLES.includes(v as UserRole)) {
     return v as UserRole
   }
   return null

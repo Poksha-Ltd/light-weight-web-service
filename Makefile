@@ -37,4 +37,27 @@ dev/test:
 	echo "not implemented"
 	exit 1
 
-dev/setup: dev/build dev/up dev/migrate
+prod/build:
+	docker compose build --no-cache
+
+prod/up:
+	docker compose up -d
+
+prod/restart:
+	docker compose restart
+
+
+prod/down:
+	docker compose down --remove-orphans
+
+prod/ps:
+	docker compose ps
+
+prod/build/migrate:
+	docker compose --profile migrate build migrate
+
+prod/db/migrate:
+	docker compose run --rm migrate
+
+dev/setup: dev/build dev/up dev/db/migrate
+prod/setup: prod/build prod/up prod/db/migrate
